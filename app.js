@@ -1,5 +1,5 @@
 require("dotenv").config();
-
+require("./passport");
 var createError = require("http-errors");
 var express = require("express");
 var path = require("path");
@@ -17,7 +17,8 @@ const TopicModel = require("./models/topic");
 
 // routes
 var indexRouter = require("./routes/index");
-var usersRouter = require("./routes/users");
+var userRouter = require("./routes/userrouter");
+const topicRouter = require("./routes/topicrouter");
 
 var app = express();
 
@@ -29,26 +30,8 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
-app.use("/users", usersRouter);
-
-app.get("/testout", (req, res) => {
-  const newTopic = new TopicModel({
-    name: "kappa",
-    description: "big kusa",
-  });
-
-  newTopic.save((err) => {
-    if (err) return res.sendStatus(400);
-    res.sendStatus(200);
-  });
-});
-
-app.get("/testin", (req, res) => {
-  TopicModel.find({ name: "kappa" }).exec((err, result) => {
-    if (err) return res.sendStatus(400);
-    res.send(result);
-  });
-});
+app.use("/user", userRouter);
+app.use("/topic", topicRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -63,7 +46,6 @@ app.use(function (err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.render("error");
 });
 
 module.exports = app;
