@@ -1,25 +1,24 @@
 const express = require("express");
 const router = express.Router();
 const { body, validationResult } = require("express-validator");
-const Topic = require("../models/topic");
 const Lesson = require("../models/lesson");
+const Section = require("../models/section");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
 
 // CR only
 
 // Read
-router.get("/:name", (req, res) => {
-  Topic.find({ name: req.params.name })
-    .collation({ locale: "en", strength: 2 })
-    .populate("lessons lessons.section")
+router.get("/:id", (req, res) => {
+  Lesson.findById(req.params.id)
+    .populate("sections sections.content")
     .exec((err, result) => {
       if (err) return res.sendStatus(404);
-      res.status(200).json({ data: result[0] });
+      else res.status(200).json({ data: result });
     });
 });
 
-// Create
+// Create section
 router.post("/", passport.authenticate("jwt", { session: false }), [
   body("name").isString().isLength({ min: 3, max: 50 }).exists(),
   body("description").isString().isLength({ min: 3, max: 300 }).exists(),
@@ -35,7 +34,7 @@ router.post("/", passport.authenticate("jwt", { session: false }), [
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     } else {
-      new Topic({
+      new Section({
         name: req.body.name,
         description: req.body.description,
       }).save((err) => {
@@ -51,8 +50,8 @@ router.post("/", passport.authenticate("jwt", { session: false }), [
   },
 ]);
 
-// Add Lesson
-router.post("/:name", passport.authenticate("jwt", { session: false }), [
+// Add section
+router.post("/:id", passport.authenticate("jwt", { session: false }), [
   body("name").exists().isString().isLength({ min: 3, max: 100 }),
   body("description")
     .exists()
@@ -71,32 +70,26 @@ router.post("/:name", passport.authenticate("jwt", { session: false }), [
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    Topic.find({ name: req.params.name })
-      .collation({ locale: "en", strength: 2 })
-      .exec((err, result) => {
-        if (err) {
-          return req.sendStatus(400);
+
+    new Section({
+      name: req.body.name,
+      description: req.body.description,
+    }).save((err, newSection) => {
+      if (err) {
+        return res.sendStatus(400);
+      }
+      Lesson.findOneAndUpdate(
+        { _id: req.params.id },
+        {
+          $addToSet: {
+            sections: newSection._id,
+          },
         }
-        new Lesson({
-          name: req.body.name,
-          description: req.body.description,
-        }).save((err, newLesson) => {
-          if (err) {
-            return res.sendStatus(400);
-          }
-          Topic.findOneAndUpdate(
-            { _id: result[0]._id },
-            {
-              $addToSet: {
-                lessons: newLesson._id,
-              },
-            }
-          ).exec((err) => {
-            if (err) return res.sendStatus(400);
-            res.sendStatus(200);
-          });
-        });
+      ).exec((err) => {
+        if (err) return res.sendStatus(400);
+        res.sendStatus(200);
       });
+    });
   },
 ]);
 

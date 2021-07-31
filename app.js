@@ -9,6 +9,7 @@ var cors = require("cors");
 var mongoose = require("mongoose");
 var mongoDB = process.env.DB_URL;
 mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.set("useFindAndModify", false);
 var db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
@@ -19,6 +20,9 @@ const TopicModel = require("./models/topic");
 var indexRouter = require("./routes/index");
 var userRouter = require("./routes/userrouter");
 const topicRouter = require("./routes/topicrouter");
+const lessonRouter = require("./routes/lessonrouter");
+const sectionRouter = require("./routes/sectionrouter");
+const postRouter = require("./routes/postrouter");
 
 var app = express();
 
@@ -32,6 +36,9 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", indexRouter);
 app.use("/user", userRouter);
 app.use("/topic", topicRouter);
+app.use("/lesson", lessonRouter);
+app.use("/section", sectionRouter);
+app.use("/post", postRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
