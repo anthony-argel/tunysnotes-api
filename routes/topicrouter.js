@@ -12,14 +12,14 @@ const jwt = require("jsonwebtoken");
 router.get("/:name", (req, res) => {
   Topic.find({ name: req.params.name })
     .collation({ locale: "en", strength: 2 })
-    .populate("lessons lessons.section")
+    .populate("lessons")
     .exec((err, result) => {
       if (err) return res.sendStatus(404);
       res.status(200).json({ data: result[0] });
     });
 });
 
-// Create
+// Create topic
 router.post("/", passport.authenticate("jwt", { session: false }), [
   body("name").isString().isLength({ min: 3, max: 50 }).exists(),
   body("description").isString().isLength({ min: 3, max: 300 }).exists(),
@@ -51,7 +51,7 @@ router.post("/", passport.authenticate("jwt", { session: false }), [
   },
 ]);
 
-// Add Lesson
+// Create and add a Lesson
 router.post("/:name", passport.authenticate("jwt", { session: false }), [
   body("name").exists().isString().isLength({ min: 3, max: 100 }),
   body("description")

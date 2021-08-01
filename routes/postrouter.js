@@ -9,6 +9,12 @@ router.post(
   "/",
   passport.authenticate("jwt", { session: false }),
   (req, res, next) => {
+    const userToken = req.headers.authorization;
+    const token = userToken.split(" ");
+    const decoded = jwt.verify(token[1], process.env.SECRET);
+    if (decoded.user.admin !== true) {
+      return res.sendStatus(403);
+    }
     const newPost = new Post({
       title: req.body.title,
       post: req.body.post,
@@ -31,6 +37,12 @@ router.put(
     }
     if (req.body.title !== "") {
       updateData.title = req.body.title;
+    }
+    const userToken = req.headers.authorization;
+    const token = userToken.split(" ");
+    const decoded = jwt.verify(token[1], process.env.SECRET);
+    if (decoded.user.admin !== true) {
+      return res.sendStatus(403);
     }
     Post.findByIdAndUpdate(req.params.id, updateData, (err, result) => {
       if (err) {

@@ -26,6 +26,12 @@ router.post(
     body("contenttype").exists().isString().isIn(["POST", "TEST", "FLASHCARD"]),
   ],
   (req, res) => {
+    const userToken = req.headers.authorization;
+    const token = userToken.split(" ");
+    const decoded = jwt.verify(token[1], process.env.SECRET);
+    if (decoded.user.admin !== true) {
+      return res.sendStatus(403);
+    }
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
